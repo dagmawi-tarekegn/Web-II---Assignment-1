@@ -53,6 +53,17 @@ const server = http.createServer(async (req, res) => {
     const urlParts = url.split('/');
     const id = urlParts[2]; // /movies/:id
 
+    // Enable CORS (optional but helpful)
+    res.setHeader('Access-Control-Allow-Origin', '*');
+    res.setHeader('Access-Control-Allow-Methods', 'GET, POST, PUT, DELETE, OPTIONS');
+    res.setHeader('Access-Control-Allow-Headers', 'Content-Type');
+
+    if (method === 'OPTIONS') {
+        res.writeHead(204);
+        res.end();
+        return;
+    }
+
     // Routing Logic
     if (url === '/movies' && method === 'GET') {
         // GET all movies
@@ -109,6 +120,18 @@ const server = http.createServer(async (req, res) => {
             sendResponse(res, 400, { message: 'Invalid JSON body' });
         }
 
+    } else if (url.startsWith('/movies/') && method === 'DELETE' && id) {
+        // DELETE movie by ID
+        let movies = readData();
+        const filteredMovies = movies.filter(m => m.id !== id);
+
+        if (movies.length !== filteredMovies.length) {
+            writeData(filteredMovies);
+            sendResponse(res, 200, { message: 'Movie deleted successfully' });
+        } else {
+            sendResponse(res, 404, { message: 'Movie not found' });
+        }
+
     } else {
         // Fallback for unknown routes
         sendResponse(res, 404, { message: 'Route not found' });
@@ -116,5 +139,5 @@ const server = http.createServer(async (req, res) => {
 });
 
 server.listen(PORT, () => {
-    console.log('Server is running on http://localhost:' + PORT);
+    console.log(`Server is running on http://localhost:${PORT}`);
 });
